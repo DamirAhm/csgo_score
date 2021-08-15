@@ -1,3 +1,4 @@
+import { Markup } from 'telegraf';
 import dotenv from 'dotenv';
 import { Scenes, session, Telegraf } from 'telegraf';
 import { WizardScene } from 'telegraf/typings/scenes';
@@ -40,7 +41,7 @@ bot.command('unsubscribe', unsubscribe);
 bot.command('mute', mute);
 bot.command('unmute', unmute);
 bot.command('rename', rename);
-bot.use(Telegraf.reply('Че несёшь?'));
+bot.use(Telegraf.reply('Че несёшь?', Markup.removeKeyboard()));
 
 mongoose.connect(
 	process.env.MONGODB_URI as string,
