@@ -1,4 +1,4 @@
-import { Context, Scenes } from 'telegraf';
+import { Context, Markup, Scenes } from 'telegraf';
 import { Update } from 'typegram';
 
 import { actions } from './../constants.js';
@@ -9,11 +9,12 @@ import { message, message_from } from '../types';
 
 async function rename(ctx: Context<Update>) {
 	try {
-		if (ctx.message?.from === undefined) {
-			throw new Error('В сообщении нет from');
-		}
-
-		const { id } = ctx.message.from;
+		//@ts-ignore
+		const { id } = (
+			ctx.message !== undefined
+				? ctx.message.from
+				: ctx.callbackQuery?.from
+		) as message_from;
 
 		const user = await UserModel.findOne({ id: id.toString() });
 
@@ -93,7 +94,10 @@ export const renameSubWizard = new Scenes.WizardScene(
 		if (subscription) {
 			subscription.name = text;
 			await user.save();
-			ctx.reply(`Имя подписки изменено на ${text}`);
+			ctx.reply(
+				`Имя подписки изменено на ${text}`,
+				Markup.removeKeyboard()
+			);
 		} else {
 			ctx.reply('Простите произошла ошибка');
 		}

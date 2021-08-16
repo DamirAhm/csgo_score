@@ -1,18 +1,20 @@
-import { Context } from 'telegraf';
+import { Context, Markup } from 'telegraf';
 import { Update } from 'typegram';
 import UserModel, {
 	SubscriptionDocument,
 	UserDocument,
 } from '../models/user.model.js';
 import { PICK_SUBSCRIPTION_WIZARD } from '../scenes/pickSubscription.js';
+import { message_from } from '../types.js';
 
 async function mute(ctx: Context) {
 	try {
-		if (ctx.message?.from === undefined) {
-			throw new Error('В сообщении нет from');
-		}
-
-		const { id } = ctx.message?.from;
+		//@ts-ignore
+		const { id } = (
+			ctx.message !== undefined
+				? ctx.message.from
+				: ctx.callbackQuery?.from
+		) as message_from;
 		const user = await UserModel.findOne({ id: id.toString() });
 
 		if (user === null) {
@@ -56,7 +58,10 @@ function createPickCallback(ctx: Context<Update>) {
 
 		await user.save();
 
-		ctx.reply(`Вы перестанете получать обновления от игрока ${picked}`);
+		ctx.reply(
+			`Вы перестанете получать обновления от игрока ${picked}`,
+			Markup.removeKeyboard()
+		);
 	};
 }
 

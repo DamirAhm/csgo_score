@@ -14,7 +14,11 @@ const URL_REGEX =
 async function subscribe(ctx: Context) {
 	try {
 		//@ts-ignore
-		const { id } = ctx.update.message.from as message_from;
+		const { id } = (
+			ctx.message !== undefined
+				? ctx.message.from
+				: ctx.callbackQuery?.from
+		) as message_from;
 
 		const user = await UserModel.findOne({ id });
 

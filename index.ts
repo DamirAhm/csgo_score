@@ -35,11 +35,17 @@ bot.use(stage.middleware());
 
 bot.start(start);
 bot.help(help);
-bot.command('subscriptions', subscriptions);
+bot.action('SUBSCRIBE', subscribe);
 bot.command('subscribe', subscribe);
+bot.action('UNSUBSCRIBE', unsubscribe);
 bot.command('unsubscribe', unsubscribe);
+bot.action('SUBSCRIPTIONS', subscriptions);
+bot.command('subscriptions', subscriptions);
+bot.action('MUTE', mute);
 bot.command('mute', mute);
+bot.action('UNMUTE', unmute);
 bot.command('unmute', unmute);
+bot.action('RENAME', rename);
 bot.command('rename', rename);
 bot.use(Telegraf.reply('Че несёшь?', Markup.removeKeyboard()));
 
