@@ -58,6 +58,7 @@ mongoose.connect(
 		console.log('Bot launched');
 
 		try {
+			getUserDetails('https://steamcommunity.com/id/k1taez');
 			pollChangesLoop();
 		} catch (err) {
 			console.log(err);

@@ -1,7 +1,7 @@
-import { Browser } from "puppeteer";
-import cheerio from "cheerio";
+import { Browser } from 'puppeteer';
+import cheerio from 'cheerio';
 
-import { UserDetails } from "./models/user.model.js";
+import { UserDetails } from './models/user.model.js';
 
 // const USER_DETAILS_QUERY = '.miniprofile_game_details';
 const USER_STATE_QUERY = '.game_state';
@@ -9,52 +9,70 @@ const USER_GAME_QUERY = '.miniprofile_game_name';
 const USER_GAME_DETAILS_QUERY = '.rich_presence';
 
 export default (browser: Browser) => {
-    async function getUserPage(steamUrl: string) {
-        try {
-            const page = await browser.newPage();
-            await page.goto(steamUrl, { timeout: 0 });
-            const avatars = await page.$$('.playerAvatar.profile_header_size');
-            for (const avatar of avatars) await avatar.hover();
-            await page.waitForSelector('.miniprofile_container', { timeout: 5000 });
+	async function getUserPage(steamUrl: string) {
+		try {
+			const page = await browser.newPage();
+			await page.goto(steamUrl, { timeout: 0 });
 
-            const content = await page.content();
+			const statusInfo = await page.$$(
+				'.profile_in_game.persona.in-game'
+			);
 
-            await page.close();
+			if (statusInfo.length === 0) {
+				return null;
+			}
 
-            return content;
-        } catch (err) {
-            if (err instanceof Error) {
-                console.log(err.message, err.stack);
-            } else {
-                console.log(err);
-            }
+			const avatars = await page.$$('.playerAvatar.profile_header_size');
+			for (const avatar of avatars) await avatar.hover();
+			await page.waitForSelector('.miniprofile_container', {
+				timeout: 5000,
+			});
 
-            return '';
-        }
-    }
+			const content = await page.content();
 
-    async function getUserDetails(steamUrl: string): Promise<UserDetails | null> {
-        const userPage = await getUserPage(steamUrl);
-        const $ = cheerio.load(userPage);
+			await page.close();
 
-        const userDetails = $('.miniprofile_gamesection');
+			return content;
+		} catch (err) {
+			if (err instanceof Error) {
+				console.log(err.message, err.stack);
+			} else {
+				console.log(err);
+			}
 
-        if (userDetails.children().length > 0) {
-            const state = userDetails.find(USER_STATE_QUERY).text();
-            const gameState = userDetails.find(USER_GAME_QUERY).text();
-            const gameDetails = userDetails.find(USER_GAME_DETAILS_QUERY).text();
+			return '';
+		}
+	}
 
-            return {
-                state,
-                gameState,
-                gameDetails
-            };
-        } else {
-            return null;
-        }
-    }
+	async function getUserDetails(
+		steamUrl: string
+	): Promise<UserDetails | null> {
+		const userPage = await getUserPage(steamUrl);
 
-    return {
-        getUserDetails,
-    }
+		if (userPage === null) return null;
+
+		const $ = cheerio.load(userPage);
+
+		const userDetails = $('.miniprofile_gamesection');
+
+		if (userDetails.children().length > 0) {
+			const state = userDetails.find(USER_STATE_QUERY).text();
+			const gameState = userDetails.find(USER_GAME_QUERY).text();
+			const gameDetails = userDetails
+				.find(USER_GAME_DETAILS_QUERY)
+				.text();
+
+			return {
+				state,
+				gameState,
+				gameDetails,
+			};
+		} else {
+			return null;
+		}
+	}
+
+	return {
+		getUserDetails,
+	};
 };
