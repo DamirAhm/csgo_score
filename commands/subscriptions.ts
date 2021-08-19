@@ -41,15 +41,7 @@ export function sendSubInfo(
 function formSubText(sub: SubscriptionDocument) {
 	const { previousState } = sub;
 
-	let mainInfo = `${sub.name}: ${previousState?.state ?? 'не играет'}`;
-
-	if (previousState?.gameState !== undefined) {
-		mainInfo += `\n${previousState.gameState}`;
-
-		if (previousState.gameDetails) {
-			mainInfo += `\n${previousState.gameDetails}`;
-		}
-	}
+	let mainInfo = `${sub.name}: ${previousState ?? 'не играет'}`;
 
 	return mainInfo;
 }

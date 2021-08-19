@@ -1,10 +1,13 @@
 import { Context, Markup, Scenes } from 'telegraf';
 
 import UserModel from './../models/user.model.js';
-import { message_from, message } from '../types';
-import { getUserDetails } from '../index.js';
 import { actions, CSGO_NAME } from '../constants.js';
 import { backKeyboard } from '../utils/markup.js';
+import { getGameState, isPlayingCS } from '../steamMiniprofile.js';
+import { getSteamId } from '../steamIds.js';
+
+import { message_from, message } from '../types';
+import { updateNonNullChain } from 'typescript';
 
 const SUBSCRIBE_WIZARD = 'SUBSCRIBE_WIZARD';
 
@@ -101,6 +104,7 @@ export const subscribeWizard = new Scenes.WizardScene(
 				ctx.wizard.selectStep(1);
 				return;
 			}
+
 			const {
 				//@ts-ignore
 				from: { id },
@@ -114,23 +118,28 @@ export const subscribeWizard = new Scenes.WizardScene(
 					'Обрабатываю страницу',
 					Markup.removeKeyboard()
 				);
-				const userDetails = await getUserDetails(url);
+				const steamId = await getSteamId(url);
+
+				if (steamId === null) {
+					ctx.reply('Не удается найти профиль, попробуйте еще раз');
+					return;
+				}
+
+				const isPlaying = await isPlayingCS(steamId);
+				let gameState: string | null = null;
 
 				//@ts-ignore
 				const { name } = ctx.wizard.state;
-
-				if (userDetails === null) {
+				if (!isPlaying) {
 					//@ts-ignore
 					ctx.reply(
 						`Вы подписались на ${name},\nон(она) сейчас не играет`
 					);
-				} else if (userDetails.gameState === CSGO_NAME) {
-					ctx.reply(
-						`Вы подписались на ${name},\nон(она) сейчас играет в кс\n${userDetails.gameDetails}`
-					);
 				} else {
+					gameState = await getGameState(steamId);
+
 					ctx.reply(
-						`Вы подписались на ${name},\nон(она) сейчас играет в ${userDetails.gameState}`
+						`Вы подписались на ${name},\nон(она) сейчас играет\n${gameState}`
 					);
 				}
 
@@ -139,7 +148,7 @@ export const subscribeWizard = new Scenes.WizardScene(
 					{
 						$push: {
 							subscriptions: [
-								{ name, url, previousState: userDetails },
+								{ name, steamId, previousState: gameState },
 							],
 						},
 					}
